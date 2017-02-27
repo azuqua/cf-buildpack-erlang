@@ -50,6 +50,7 @@ cd $build
 if [ ! -e "rebar3" ]; then
   echo "-----> Installing Rebar3 from buildpack"
   curl -sO ${REBAR3_URL} || exit 1
+  chmod u+x ./rebar3
 fi
 
 echo "-----> Building with Rebar3"
