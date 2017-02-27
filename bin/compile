@@ -17,6 +17,7 @@ fi
 ver=${OTP_VERSION:=${DEFAULT_OTP_VERSION}}
 tarball=${ver}.tgz
 OTP_TARBALL_URL="https://s3.amazonaws.com/heroku-buildpack-erlang/${tarball}"
+REBAR3_URL="https://s3.amazonaws.com/rebar3/rebar3"
 ERLROOT=${build}/otp
 PROFILE=${build}/.profile.d
 
@@ -46,14 +47,15 @@ export PATH
 
 cd $build
 
-if [ ! -e "rebar" ]; then
-  echo "-----> Installing Rebar from buildpack"
-  cp ${bpdir}/opt/rebar ./
+if [ ! -e "rebar3" ]; then
+  echo "-----> Installing Rebar3 from buildpack"
+  curl -sO ${REBAR3_URL} || exit 1
 fi
 
-echo "-----> Building with Rebar"
+echo "-----> Building with Rebar3"
 unset GIT_DIR
-./rebar get-deps compile 2>&1 | sed -u 's/^/       /'
+./rebar3 compile 2>&1 | sed -u 's/^/       /'
+./rebar3 release 2>&1 | sed -u 's/^/       /'
 if [ ${PIPESTATUS[0]} -ne 0 ]; then
   echo "-----> Build failed"
   exit 1
