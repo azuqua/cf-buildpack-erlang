@@ -1,0 +1,3 @@
+---
+default_process_types:
+  web: exec rebar3 help

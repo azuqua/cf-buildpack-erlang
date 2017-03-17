@@ -1,5 +1,4 @@
 #!/bin/bash
-
 ##
 # usage: bin/compile <build-dir> <cache-dir>
 
@@ -35,9 +34,14 @@ echo "-----> Using Erlang/OTP $ver"
     curl -sO ${OTP_TARBALL_URL} || exit 1
 )
 
+# if tarball is not just an OTP version, remove runtimes prefix
+if [[ $tarball == runtimes/* ]]; then
+  tarball=$(echo $tarball | cut -b 10-)
+fi
+
 echo "-------> Unpacking Erlang/OTP $ver"
 mkdir -p ${ERLROOT}
-tar zxf ${cache}/${tarball} -C ${ERLROOT} --strip-components=2
+tar zxf ${cache}/${tarball} -C ${ERLROOT}
 echo "-------> Installing Erlang/OTP $ver"
 ln -s ${ERLROOT} /app/otp
 ${ERLROOT}/Install -minimal /app/otp
