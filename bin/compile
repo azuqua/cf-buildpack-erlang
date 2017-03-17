@@ -1,5 +1,4 @@
 #!/bin/bash
-
 ##
 # usage: bin/compile <build-dir> <cache-dir>
 
@@ -17,6 +16,7 @@ fi
 ver=${OTP_VERSION:=${DEFAULT_OTP_VERSION}}
 tarball=${ver}.tgz
 OTP_TARBALL_URL="https://s3.amazonaws.com/heroku-buildpack-erlang/${tarball}"
+REBAR3_URL="https://s3.amazonaws.com/rebar3/rebar3"
 ERLROOT=${build}/otp
 PROFILE=${build}/.profile.d
 
@@ -34,9 +34,14 @@ echo "-----> Using Erlang/OTP $ver"
     curl -sO ${OTP_TARBALL_URL} || exit 1
 )
 
+# if tarball is not just an OTP version, remove runtimes prefix
+if [[ $tarball == runtimes/* ]]; then
+  tarball=$(echo $tarball | cut -b 10-)
+fi
+
 echo "-------> Unpacking Erlang/OTP $ver"
 mkdir -p ${ERLROOT}
-tar zxf ${cache}/${tarball} -C ${ERLROOT} --strip-components=2
+tar zxf ${cache}/${tarball} -C ${ERLROOT}
 echo "-------> Installing Erlang/OTP $ver"
 ln -s ${ERLROOT} /app/otp
 ${ERLROOT}/Install -minimal /app/otp
@@ -46,14 +51,16 @@ export PATH
 
 cd $build
 
-if [ ! -e "rebar" ]; then
-  echo "-----> Installing Rebar from buildpack"
-  cp ${bpdir}/opt/rebar ./
+if [ ! -e "rebar3" ]; then
+  echo "-----> Installing Rebar3 from buildpack"
+  curl -sO ${REBAR3_URL} || exit 1
+  chmod u+x ./rebar3
 fi
 
-echo "-----> Building with Rebar"
+echo "-----> Building with Rebar3"
 unset GIT_DIR
-./rebar get-deps compile 2>&1 | sed -u 's/^/       /'
+./rebar3 compile 2>&1 | sed -u 's/^/       /'
+./rebar3 release 2>&1 | sed -u 's/^/       /'
 if [ ${PIPESTATUS[0]} -ne 0 ]; then
   echo "-----> Build failed"
   exit 1
